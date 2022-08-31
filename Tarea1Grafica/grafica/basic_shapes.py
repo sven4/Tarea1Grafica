@@ -92,6 +92,21 @@ def createColorCube(r, g, b):
     return Shape(vertices, indices)
 
 
+def crearCircunferencia(radio, r, g, b):
+    n = 50
+    dtheta = 2 * math.pi / n
+    indices = [0, 0, 0, r, g, b]
+    vertices = []
+
+    for i in range(n):
+        theta = dtheta * i
+        vertices += [radio * math.cos(theta), radio*math.sin(theta), 0,
+                    r, g, b]
+        indices += [0, i, i+1]
+
+    return Shape(vertices, indices)
+
+
 def crearEsfera(radio, r, g, b):
     n = 20
     dtheta = math.pi / n

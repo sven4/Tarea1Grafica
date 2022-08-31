@@ -65,23 +65,24 @@ def main():
     # Creating shapes on GPU memory
     gpuAxis = createGPUShape(bs.createAxis(7))
 
-    gpuSol = createGPUShape(bs.crearEsferaConPuntosCaoticos(1.5, 1, 50 / 255, 0))
+    gpuSol = createGPUShape(bs.crearEsferaConPuntosCaoticos(2, 1, 50 / 255, 0))  # Valor real 7
 
-    gpuMercurio = createGPUShape(bs.crearEsferaConPuntosCaoticos(0.06, 1, 180 / 255, 0))
-    gpuVenus = createGPUShape(bs.crearEsferaConZonasCaoticas(0.14, 1, 120 / 255, 0))
-    gpuTierra = createGPUShape(bs.crearEsfera(0.15, 0, 170 / 255, 0))
-    gpuLuna = createGPUShape(bs.crearEsfera(0.02, 100/255, 100/255, 100/255))
-    gpuMarte = createGPUShape(bs.crearEsfera(0.08, 1, 0, 0))
+    gpuMercurio = createGPUShape(bs.crearEsferaConPuntosCaoticos(0.12, 1, 180 / 255, 0))  # Valor real 0.03
+    gpuVenus = createGPUShape(bs.crearEsferaConZonasCaoticas(0.24, 1, 120 / 255, 0))  # Valor real 0.06
+    gpuTierra = createGPUShape(bs.crearEsfera(0.252, 0, 170 / 255, 0))  # Valor real 0.063
+    gpuLuna = createGPUShape(bs.crearEsfera(0.084, 100/255, 100/255, 100/255))
+    gpuMarte = createGPUShape(bs.crearEsfera(0.132, 1, 0, 0))
     gpuJupiter = createGPUShape(bs.crearEsferaConZonasCaoticas(0.8, 241 / 255, 173 / 255, 101 / 255))  # Valor real: 1.4
-    gpuSaturno = createGPUShape(bs.crearEsferaConZonasCaoticas(0.6, 1, 191 / 255, 94 / 255))  # Valor real: 1.1
+    gpuSaturno = createGPUShape(bs.crearEsferaConZonasCaoticas(0.7, 1, 191 / 255, 94 / 255))  # Valor real: 1.1
+    gpuAnilloSaturno = createGPUShape(bs.crearCircunferencia(1, 192 / 255, 150/255, 101/255))
     gpuUrano = createGPUShape(bs.crearEsferaConZonasCaoticas(0.3, 0, 1, 200 / 255))  # Valor real: 0.5
-    gpuNeptuno = createGPUShape(bs.crearEsferaConZonasCaoticas(0.299, 0, 0, 1))  # Valor real: 0.49
+    gpuNeptuno = createGPUShape(bs.crearEsferaConZonasCaoticas(0.29, 0, 0, 1))  # Valor real: 0.49
 
     camera_theta = np.pi / 4
 
     # Setting up the view transform
 
-    cam_radius = 10
+    cam_radius = 14
     cam_x = cam_radius * np.sin(camera_theta)
     cam_y = cam_radius * np.cos(camera_theta)
     cam_z = cam_radius
@@ -92,7 +93,8 @@ def main():
 
     # Setting up the projection transform
 
-    projection = tr.ortho(-8, 8, -8, 8, 0.1, 100)
+    # projection = tr.ortho(-8, 8, -8, 8, 0.1, 100)
+    projection = tr.perspective(60, float(width)/float(height), 0.1, 100)
 
     ##### UN CONTADOR QUE NOS ASISTIRA EN LAS TRANSFORMACIONES #####
     t0 = glfw.get_time()
@@ -120,15 +122,16 @@ def main():
 
         matrizSol = tr.matmul([tr.rotationZ(t1 * 0.5)])
 
-        matriz_mercurio = tr.matmul([tr.rotationZ(t1), tr.translate(2, 0, 0)])
-        matriz_venus = tr.matmul([tr.rotationZ(t1 + 2), tr.translate(2.4, 0, 0)])
-        matriz_tierra = tr.matmul([tr.rotationZ(t1 + 3), tr.translate(2.8, 0, 0)])
-        matriz_luna = tr.matmul([tr.rotationZ(t1)])
-        matriz_marte = tr.matmul([tr.rotationZ(t1 + 1), tr.translate(3.2, 0, 0)])
-        matriz_jupiter = tr.matmul([tr.rotationZ(t1 - 2), tr.translate(4.2, 0, 0)])
-        matriz_saturno = tr.matmul([tr.rotationZ(t1 - 3), tr.translate(5.2, 0, 0)])
-        matriz_urano = tr.matmul([tr.rotationZ(t1 - 4), tr.translate(5.6, 0, 0)])
-        matriz_neptuno = tr.matmul([tr.rotationZ(t1 + 0.2), tr.translate(6, 0, 0)])
+        matriz_mercurio = tr.matmul([tr.rotationZ(2*t1), tr.translate(2 + 0.5, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
+        matriz_venus = tr.matmul([tr.rotationZ(1.5*t1), tr.translate(2 + 1, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
+        matriz_tierra = tr.matmul([tr.rotationZ(1.25*t1), tr.translate(2 + 1.5, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
+        matriz_luna = tr.matmul(([tr.rotationZ(1.25*t1), tr.translate(2+1.5, 0, 0), tr.rotationZ(1.5*t1), tr.translate(0.5, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)]))
+        matriz_marte = tr.matmul([tr.rotationZ(1.05*t1), tr.translate(2 + 2, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
+        matriz_jupiter = tr.matmul([tr.rotationZ(t1/3), tr.translate(4 + 2.5, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
+        matriz_saturno = tr.matmul([tr.rotationZ(t1/4), tr.translate(4 + 4, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
+        matriz_anillo_saturno = tr.matmul([tr.rotationZ(t1/4), tr.translate(4 + 4, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
+        matriz_urano = tr.matmul([tr.rotationZ(t1/5), tr.translate(4 + 5, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
+        matriz_neptuno = tr.matmul([tr.rotationZ(t1/8), tr.translate(4 + 6, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
 
         # matrizSol = tr.translate(0, 4*math.sin(t1), 0)
         # matrizSol = tr.translate(4*math.sin(t1), 0 , 0)
@@ -143,6 +146,9 @@ def main():
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_tierra)
         pipeline.drawCall(gpuTierra)
 
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_luna)
+        pipeline.drawCall(gpuLuna)
+
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_marte)
         pipeline.drawCall(gpuMarte)
 
@@ -151,6 +157,9 @@ def main():
 
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_saturno)
         pipeline.drawCall(gpuSaturno)
+
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno)
+        pipeline.drawCall(gpuAnilloSaturno)
 
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_urano)
         pipeline.drawCall(gpuUrano)
