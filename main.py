@@ -1,4 +1,3 @@
-"""Actividad 2"""
 import math
 
 import glfw
@@ -6,30 +5,12 @@ from OpenGL.GL import *
 import numpy as np
 
 import grafica.transformations as tr
+import grafica.pipelines as pi
 import grafica.basic_shapes as bs
 import grafica.easy_shaders as es
 from grafica.assets_path import getAssetPath
-
-
-# Esto es para crear la vista que sigue al planeta Tierra
-def crear_view2(theta):
-    cam_radius = 2 + 1.33
-    cam_x1 = cam_radius * np.cos(1.25 * theta)
-    cam_y1 = cam_radius * np.sin(1.25 * theta)
-    cam_z1 = 0
-    viewEarthEclipse = np.array([cam_x1, cam_y1, cam_z1])
-    return viewEarthEclipse
-
-
-# Esto crea la view de los anillos de Saturno
-def crear_view3(theta):
-    cam_radius2 = 2 + 10
-    cam_x2 = cam_radius2 * np.cos(theta / 4) * np.cos(4)
-    cam_y2 = cam_radius2 * np.sin(theta / 4)
-    cam_z2 = - cam_radius2 * np.cos(theta / 4) * np.sin(4)
-
-    viewSaturnRings = np.array([cam_x2, cam_y2, cam_z2])
-    return viewSaturnRings
+from grafica.camaras import crear_view2, crear_view3
+from grafica.readOff import readOFF
 
 # Flags para controlar la view
 viewing1 = True
@@ -62,15 +43,14 @@ def on_key(window, key, scancode, action, mods):
     if key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, True)
 
-
 def main():
     # Initialize glfw
     if not glfw.init():
         glfw.set_window_should_close(window, True)
 
     global view, viewing1, viewing2, viewing3
-    width = 1280
-    height = 720
+    width = 800
+    height = 600
 
     window = glfw.create_window(width, height, "Sistema Solar", None, None)
 
@@ -86,6 +66,7 @@ def main():
     # Assembling the shader program
     pipeline = es.SimpleModelViewProjectionShaderProgram()
     pipeline2 = es.SimpleTextureShaderProgram()
+    pipelineReadOff = pi.SimpleFlatShaderProgram()
 
     # Telling OpenGL to use our shader program
     glUseProgram(pipeline.shaderProgram)
@@ -104,10 +85,12 @@ def main():
         gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
         return gpuShape
 
-    def createGPUShapeStream(shape):
+    def createOFFShape(pipeline, r, g, b):
+        shape = readOFF(getAssetPath('Tri_Fighter.off'), (r, g, b))
         gpuShape = es.GPUShape().initBuffers()
         pipeline.setupVAO(gpuShape)
-        gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STREAM_DRAW)
+        gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
+
         return gpuShape
     # Creating shapes on GPU memory
     gpuAxis = createGPUShapeStatic(bs.createAxis(7))
@@ -144,6 +127,8 @@ def main():
     gpuUrano = createGPUShapeStatic(bs.crearEsferaConZonasCaoticas(0.3, 0, 1, 200 / 255))  # Valor real: 0.5
     gpuNeptuno = createGPUShapeStatic(bs.crearEsferaConZonasCaoticas(0.29, 0, 0, 1))  # Valor real: 0.49
     gpuAnilloNeptuno1 = createGPUShapeStatic(bs.crearAnillo(0.4, 0.395, 0, 200/255, 140/255))
+
+    gpuNave1 = createOFFShape(pipelineReadOff, 250/255, 30/255, 60/255)
 
     # Aqui se crea la view1
     cam_radius = 10
@@ -201,6 +186,8 @@ def main():
         matriz_anillo_saturno1 = tr.matmul([tr.rotationY(4), tr.rotationZ(t1/4), tr.translate(4 + 4, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
         matriz_urano = tr.matmul([tr.rotationY(5), tr.rotationZ(t1/5), tr.translate(4 + 5, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
         matriz_neptuno = tr.matmul([tr.rotationX(20), tr.rotationZ(t1/8), tr.translate(4 + 6, 0, 0), tr.rotationX(0.5), tr.rotationY(0.1*t1)])
+
+        matriz_nave1 = tr.matmul([tr.rotationY(20), tr.translate(3, 3, 3)])
 
         # En esta parte se maneja el color
         if t1 < 40:  # Antes de los 40 segundos el color rojo se va incrementando
@@ -282,6 +269,10 @@ def main():
 
             glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_sol)
             pipeline.drawCall(gpuSol)
+
+            glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_nave1)
+            pipeline.drawCall(gpuNave1)
+
 
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         pipeline.drawCall(gpuAxis, GL_LINES)
