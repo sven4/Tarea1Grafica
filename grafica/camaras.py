@@ -20,3 +20,4 @@ def crear_view3(theta):
     viewSaturnRings = np.array([cam_x2, cam_y2, cam_z2])
     return viewSaturnRings
 
+
