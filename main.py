@@ -77,8 +77,8 @@ def main():
         glfw.set_window_should_close(window, True)
 
     global view, viewing1, viewing2, viewing3, viewing4, controller
-    width = 2000
-    height = 1500
+    width = 800
+    height = 600
 
     window = glfw.create_window(width, height, "Sistema Solar", None, None)
 
@@ -147,7 +147,7 @@ def main():
     gpuNave3 = createOFFShape(pipelineReadOff, 120/255, 120/255, 0/255)
     gpuNave4 = createOFFShape(pipelineReadOff, 0/255, 120/255, 120/255)
     gpuNave5 = createOFFShape(pipelineReadOff, 180/255, 180/255, 180/255)
-    tamanhoNaves = 0.2
+    tamanhoNaves = 0.18
     velocidadNave = 1
 
     # Aqui se crea la view1
@@ -180,9 +180,9 @@ def main():
         if viewing1:
             view = view1
         elif viewing2:
-            view = tr.lookAt(crear_view2(t1), np.array([0, 0, 0]), np.array([0, 0, 1]))
+            view = tr.lookAt(crear_view2(t1), np.array([0,0,0]), np.array([0, 0, 1]))
         elif viewing3:
-            view = tr.lookAt(crear_view3(t1), np.array([0, 0, 0]), np.array([0, 0, 1]))
+            view = tr.lookAt(crear_view3(t1, 13), crear_view3(t1, 12), np.array([0,0,1]))
         elif viewing4:
             Xesf = tamanhoNaves * 4 * np.sin(controller.pitch) * np.cos(controller.yaw)  # coordenada X esferica
             Yesf = tamanhoNaves * 4 * np.sin(controller.pitch) * np.sin(controller.yaw)  # coordenada Y esferica
@@ -346,9 +346,9 @@ def main():
         if t1 < tiempoLimite:  # Antes de los tiempoLimite segundos el color rojo se va incrementando
             gsol = 100 - 100*t1/tiempoLimite
         elif rsol != 0 and gsol < 220 and bsol < 220 and t1 >= tiempoLimite:
-            rsol -= 255*dt/tiempoLimite*8
-            gsol += 220*dt/tiempoLimite*8
-            bsol += 220*dt/tiempoLimite*8
+            rsol -= 255*dt*8/tiempoLimite
+            gsol += 220*dt*8/tiempoLimite
+            bsol += 220*dt*8/tiempoLimite
         else:
             rsol = 0
             gsol = 220
@@ -356,13 +356,13 @@ def main():
 
         # En esta parte se cambian los colores del sol al iniciar la supernova sin la necesidad de redibujarlo, no es buen diseño considerando
         # la forma en la que se cambiaron los colores del sol antes
-        if t1 < tiempoLimite + 2:
+        if t1 < tiempoLimite + 5:
             vertices_sol = bs.crearVerticesEsfera(2, 50, rsol/255, gsol/255, bsol/255)
             vertex_data_sol = np.array(vertices_sol, dtype=np.float32)
             glBindBuffer(GL_ARRAY_BUFFER, gpuSol.vbo)
             glBufferData(GL_ARRAY_BUFFER, len(vertex_data_sol) * 4, vertex_data_sol, GL_STREAM_DRAW)
         else:  # Despues de empezar la supernova se aumenta el tamaño del sol hasta que explociona el sistema solar
-            matriz_sol = tr.matmul([matriz_sol, tr.uniformScale(t1 - tiempoLimite + 2)])
+            matriz_sol = tr.matmul([matriz_sol, tr.uniformScale(t1 - tiempoLimite - 4)])
         glUseProgram(pipelineTexture.shaderProgram)
 
         glUniformMatrix4fv(glGetUniformLocation(pipelineTexture.shaderProgram, "transform"), 1, GL_TRUE, tr.uniformScale(10))
@@ -381,8 +381,8 @@ def main():
             glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_tierra)
             pipeline.drawCall(gpuTierra)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.translate(5.5, 1, 1))
-            pipeline.drawCall(gpuLumbre) # Esto es un objeto estatico para probar la camara en movimiento
+            # glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.translate(5.5, 1, 1))
+            # pipeline.drawCall(gpuLumbre) # Esto es un objeto estatico para probar la camara en movimiento
 
             glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_luna)
             pipeline.drawCall(gpuLuna)
