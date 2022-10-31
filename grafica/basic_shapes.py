@@ -65,29 +65,56 @@ def createRainbowCube():
     return Shape(vertices, indices)
 
 
-def createColorCube(r, g, b):
+def createColorNormalsCube(r, g, b):
     # Defining the location and colors of each vertex  of the shape
     vertices = [
-        #    positions        colors
-        -0.5, -0.5, 0.5, r, g, b,
-        0.5, -0.5, 0.5, r, g, b,
-        0.5, 0.5, 0.5, r, g, b,
-        -0.5, 0.5, 0.5, r, g, b,
+        #   positions         colors   normals
+        # Z+
+        -0.5, -0.5, 0.5, r, g, b, 0, 0, 1,
+        0.5, -0.5, 0.5, r, g, b, 0, 0, 1,
+        0.5, 0.5, 0.5, r, g, b, 0, 0, 1,
+        -0.5, 0.5, 0.5, r, g, b, 0, 0, 1,
 
-        -0.5, -0.5, -0.5, r, g, b,
-        0.5, -0.5, -0.5, r, g, b,
-        0.5, 0.5, -0.5, r, g, b,
-        -0.5, 0.5, -0.5, r, g, b]
+        # Z-
+        -0.5, -0.5, -0.5, r, g, b, 0, 0, -1,
+        0.5, -0.5, -0.5, r, g, b, 0, 0, -1,
+        0.5, 0.5, -0.5, r, g, b, 0, 0, -1,
+        -0.5, 0.5, -0.5, r, g, b, 0, 0, -1,
+
+        # X+
+        0.5, -0.5, -0.5, r, g, b, 1, 0, 0,
+        0.5, 0.5, -0.5, r, g, b, 1, 0, 0,
+        0.5, 0.5, 0.5, r, g, b, 1, 0, 0,
+        0.5, -0.5, 0.5, r, g, b, 1, 0, 0,
+
+        # X-
+        -0.5, -0.5, -0.5, r, g, b, -1, 0, 0,
+        -0.5, 0.5, -0.5, r, g, b, -1, 0, 0,
+        -0.5, 0.5, 0.5, r, g, b, -1, 0, 0,
+        -0.5, -0.5, 0.5, r, g, b, -1, 0, 0,
+
+        # Y+
+        -0.5, 0.5, -0.5, r, g, b, 0, 1, 0,
+        0.5, 0.5, -0.5, r, g, b, 0, 1, 0,
+        0.5, 0.5, 0.5, r, g, b, 0, 1, 0,
+        -0.5, 0.5, 0.5, r, g, b, 0, 1, 0,
+
+        # Y-
+        -0.5, -0.5, -0.5, r, g, b, 0, -1, 0,
+        0.5, -0.5, -0.5, r, g, b, 0, -1, 0,
+        0.5, -0.5, 0.5, r, g, b, 0, -1, 0,
+        -0.5, -0.5, 0.5, r, g, b, 0, -1, 0
+    ]
 
     # Defining connections among vertices
     # We have a triangle every 3 indices specified
     indices = [
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4,
-        4, 5, 1, 1, 0, 4,
-        6, 7, 3, 3, 2, 6,
-        5, 6, 2, 2, 1, 5,
-        7, 4, 0, 0, 3, 7]
+        0, 1, 2, 2, 3, 0,  # Z+
+        7, 6, 5, 5, 4, 7,  # Z-
+        8, 9, 10, 10, 11, 8,  # X+
+        15, 14, 13, 13, 12, 15,  # X-
+        19, 18, 17, 17, 16, 19,  # Y+
+        20, 21, 22, 22, 23, 20]  # Y-
 
     return Shape(vertices, indices)
 
@@ -116,20 +143,21 @@ def crearAnillo(radio,radioInterior, r, g, b):
     for i in range(n+1):
         theta = dtheta * i
         vertices += [radio * math.cos(theta), radio*math.sin(theta), 0,
-                     r, g, b]
+                     r, g, b,
+                     0, 0, 1]
         vertices += [radioInterior * math.cos(theta), radioInterior*math.sin(theta), 0,
-                     r, g, b]
+                     r, g, b,
+                     0, 0, 1]
 
         indices += [i, i+1, i+2]
         indices += [n+i, n+i+1, n+i+2]
     return Shape(vertices, indices)
 
 
-def crearVerticesEsfera(radio, n, r, g, b):
+def crearVerticesEsfera(radio, n, r, g, b, entropia):
     dtheta = math.pi / n
     dphi = 2 * math.pi / n
     vertices = []
-    entropia = 15
     for i in range(n+1):
         theta = dtheta * i
         for j in range(n+1):
@@ -140,7 +168,8 @@ def crearVerticesEsfera(radio, n, r, g, b):
             vertices += [
                 radio * math.cos(phi) * math.sin(theta), radio * math.sin(phi) * math.sin(theta),
                 radio * math.cos(theta),
-                (r * 255 + ran1) / 255, (g * 255 + ran2) / 255, (b * 255 + ran3) / 255
+                (r * 255 + ran1) / 255, (g * 255 + ran2) / 255, (b * 255 + ran3) / 255,
+                math.sin(theta) * math.cos(phi), math.sin(theta) * math.sin(phi), math.cos(theta)
             ]
     return vertices
 
@@ -160,9 +189,9 @@ def crearIndicesEsfera(n):
     return indices
 
 
-def crearEsfera(radio, r, g, b):
+def crearEsfera(radio, r, g, b, entropia):
     n = 50
-    vertices = crearVerticesEsfera(radio, n, r, g, b)
+    vertices = crearVerticesEsfera(radio, n, r, g, b, entropia)
     indices = crearIndicesEsfera(n)
 
     return Shape(vertices, indices)
@@ -208,7 +237,8 @@ def crearEsferaConZonasCaoticas(radio, r, g, b):
             vertices += [
                 radio * math.cos(phi) * math.sin(theta), radio * math.sin(phi) * math.sin(theta),
                 radio * math.cos(theta),
-                (r * 255 + ran1) / 255, (g * 255 + ran2) / 255, (b * 255 + ran3) / 255
+                (r * 255 + ran1) / 255, (g * 255 + ran2) / 255, (b * 255 + ran3) / 255,
+                math.sin(theta) * math.cos(phi), math.sin(theta) * math.sin(phi), math.cos(theta)
             ]
             indices += [
                 k1, k1 + 1, k2,
@@ -220,7 +250,7 @@ def crearEsferaConZonasCaoticas(radio, r, g, b):
 
 def crearEsferaConPuntosCaoticos(radio, r, g, b):
     n = 50
-    entropia = 10
+    entropia = 5
     dtheta = math.pi / n
     dphi = 2 * math.pi / n
     vertices = []
@@ -240,7 +270,8 @@ def crearEsferaConPuntosCaoticos(radio, r, g, b):
             vertices += [
                 radio * math.cos(phi) * math.sin(theta), radio * math.sin(phi) * math.sin(theta),
                 radio * math.cos(theta),
-                (r * 255 + ran1) / 255, (g * 255 + ran2) / 255, (b * 255 + ran3) / 255
+                (r * 255 + ran1) / 255, (g * 255 + ran2) / 255, (b * 255 + ran3) / 255,
+                math.sin(theta) * math.cos(phi), math.sin(theta) * math.sin(phi), math.cos(theta)
             ]
             indices += [
                 k1, k1 + 1, k2,

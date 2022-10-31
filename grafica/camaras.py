@@ -2,10 +2,10 @@ import numpy as np
 import grafica.transformations as tr
 
 # Esto es para crear la vista que sigue al planeta Tierra
-def crear_view2(theta):
-    cam_radius = 2 + 2
-    cam_x = cam_radius * np.cos(1.25 * theta)
-    cam_y = cam_radius * np.sin(1.25 * theta)
+def crear_view2(theta, radius):
+    cam_radius = radius
+    cam_x = cam_radius * np.cos(theta)
+    cam_y = cam_radius * np.sin(theta)
     cam_z = 0.5
     viewEarthEclipse = np.array([cam_x, cam_y, cam_z])
     return viewEarthEclipse
