@@ -11,7 +11,7 @@ import grafica.easy_shaders as es
 from grafica import curvas
 from grafica.assets_path import getAssetPath
 from grafica.camaras import crear_view2, crear_view3
-from grafica.createShapes import createGPUShapeStatic, createOFFShape
+from grafica.createShapes import createGPUShapeStatic, createOffShape
 
 # Flags para controlar la view
 viewing1 = True
@@ -31,9 +31,43 @@ class Controller:
         self.pitch = np.pi/2
         self.yaw = 0.0
         self.turbo = False
-
+class Spotlight:
+    def __init__(self):
+        self.ambient = np.array([0,0,0])
+        self.diffuse = np.array([0,0,0])
+        self.specular = np.array([0,0,0])
+        self.constant = 0
+        self.linear = 0
+        self.quadratic = 0
+        self.position = np.array([0,0,0])
+        self.direction = np.array([0,0,0])
+        self.cutOff = 0
+        self.outerCutOff = 0
 
 controller = Controller()
+
+spotlightsPool = dict()
+
+
+def setLights():
+    # TAREA4: Primera luz spotlight
+    spot1 = Spotlight()
+    spot1.ambient = np.array([0.0, 0.0, 0.0])
+    spot1.diffuse = np.array([1.0, 1.0, 1.0])
+    spot1.specular = np.array([1.0, 1.0, 1.0])
+    spot1.constant = 1.0
+    spot1.linear = 0.09
+    spot1.quadratic = 0.032
+    spot1.position = np.array([2, 5, 0])  # TAREA4: esta ubicada en esta posición
+    spot1.direction = np.array(
+        [0, -1, 0])  # TAREA4: está apuntando perpendicularmente hacia el terreno (Y-, o sea hacia abajo)
+    spot1.cutOff = np.cos(np.radians(12.5))  # TAREA4: corte del ángulo para la luz
+    spot1.outerCutOff = np.cos(np.radians(45))  # TAREA4: la apertura permitida de la luz es de 45°
+    # mientras más alto es este ángulo, más se difumina su efecto
+
+    spotlightsPool['spot1'] = spot1  # TAREA4: almacenamos la luz en el diccionario, con una clave única
+
+
 def on_key(window, key, scancode, action, mods):
     if action != glfw.PRESS:
         return
@@ -95,6 +129,7 @@ def main():
     pipeline = es.SimpleModelViewProjectionShaderProgram()
     pipelineTexture = es.SimpleTextureShaderProgram()
     pipelineReadOff = pi.SimpleFlatShaderProgram()
+    pipelinePhong = pi.SimplePhongShaderProgram()
 
     # Telling OpenGL to use our shader program
     glUseProgram(pipeline.shaderProgram)
@@ -141,14 +176,18 @@ def main():
     gpuUrano = createGPUShapeStatic(pipeline, bs.crearEsferaConZonasCaoticas(0.3, 0, 1, 200 / 255))  # Valor real: 0.5
     gpuNeptuno = createGPUShapeStatic(pipeline, bs.crearEsferaConZonasCaoticas(0.29, 0, 0, 1))  # Valor real: 0.49
     gpuAnilloNeptuno1 = createGPUShapeStatic(pipeline, bs.crearAnillo(0.4, 0.395, 0, 200/255, 140/255))
+    gpuEstelaUnitaria1 = createGPUShapeStatic(pipeline, bs.createColorCube(120/255, 20/255, 20/255))
+    gpuEstelaUnitaria2 = createGPUShapeStatic(pipeline, bs.createColorCube(20/255, 20/255, 120/255))
+    gpuEstelaUnitaria3 = createGPUShapeStatic(pipeline, bs.createColorCube(120/255, 120/255, 0/255))
+    gpuEstelaUnitaria4 = createGPUShapeStatic(pipeline, bs.createColorCube(0/255, 120/255, 120/255))
+    gpuEstelaUnitaria5 = createGPUShapeStatic(pipeline, bs.createColorCube(180/255, 180/255, 180/255))
 
-    gpuNave1 = createOFFShape(pipelineReadOff, 120/255, 20/255, 20/255)
-    gpuNave2 = createOFFShape(pipelineReadOff, 20/255, 20/255, 120/255)
-    gpuNave3 = createOFFShape(pipelineReadOff, 120/255, 120/255, 0/255)
-    gpuNave4 = createOFFShape(pipelineReadOff, 0/255, 120/255, 120/255)
-    gpuNave5 = createOFFShape(pipelineReadOff, 180/255, 180/255, 180/255)
+    gpuNave1 = createOffShape(pipelineReadOff, "Tri_Fighter.off", 120 / 255, 20 / 255, 20 / 255)
+    gpuNave2 = createOffShape(pipelineReadOff, "Tri_Fighter.off", 20 / 255, 20 / 255, 120 / 255)
+    gpuNave3 = createOffShape(pipelineReadOff, "Tri_Fighter.off", 120 / 255, 120 / 255, 0 / 255)
+    gpuNave4 = createOffShape(pipelineReadOff, "Tri_Fighter.off", 0 / 255, 120 / 255, 120 / 255)
+    gpuNave5 = createOffShape(pipelineReadOff, "Tri_Fighter.off", 180 / 255, 180 / 255, 180 / 255)
     tamanhoNaves = 0.2
-    velocidadNave = 1
 
     # Aqui se crea la view1
     cam_radius = 10
@@ -162,6 +201,13 @@ def main():
     t0 = glfw.get_time()
     N = 250
     C1 = curvas.generarCurvaCerradaNave1(N, 5, 0)
+    indiceEstelas = 0
+    indiceEstelaNave5 = 0
+    matricesEstelas1 = [None] * (N//3)
+    matricesEstelas2 = [None] * (N//3)
+    matricesEstelas3 = [None] * (N//3)
+    matricesEstelas4 = [None] * (N//3)
+    matricesEstelas5 = [None] * (N//3)
     C2 = curvas.generarCurvaCerradaNave2(N, 3, 5)
     C3 = curvas.generarCurvaCerradaNave1(N, 7, -4)
     C4 = curvas.generarCurvaCerradaNave2(N, 10, 0)
@@ -184,9 +230,9 @@ def main():
         elif viewing3:
             view = tr.lookAt(crear_view3(t1), np.array([0, 0, 0]), np.array([0, 0, 1]))
         elif viewing4:
-            Xesf = tamanhoNaves * 4 * np.sin(controller.pitch) * np.cos(controller.yaw)  # coordenada X esferica
-            Yesf = tamanhoNaves * 4 * np.sin(controller.pitch) * np.sin(controller.yaw)  # coordenada Y esferica
-            Zesf = tamanhoNaves * 4 * np.cos(controller.pitch)
+            Xesf = tamanhoNaves * 12 * np.sin(controller.pitch + np.pi/8) * np.cos(controller.yaw - np.pi/2)  # coordenada X esferica
+            Yesf = tamanhoNaves * 12 * np.sin(controller.pitch + np.pi/8) * np.sin(controller.yaw - np.pi/2)  # coordenada Y esferica
+            Zesf = tamanhoNaves * 12 * np.cos(controller.pitch + np.pi/8)
             viewPos = np.array([
                 controller.X - Xesf,
                 controller.Y - Yesf,
@@ -200,15 +246,27 @@ def main():
             view = view1
 
         if controller.turbo:
-            velocidadNave = 3
+            velocidadNave = 5
         else:
             velocidadNave = 1
 
+        matriz_estela_nueva5 = tr.matmul([
+            tr.translate(controller.X, controller.Y, controller.Z),
+            tr.uniformScale(0.025)])
+
         if (glfw.get_key(window, glfw.KEY_W) == glfw.PRESS):
+            if indiceEstelaNave5 >= (N // 3):
+                indiceEstelaNave5 = 0
+            matricesEstelas5[indiceEstelaNave5] = matriz_estela_nueva5
+            indiceEstelaNave5 += 1
             controller.X += velocidadNave * dt * np.cos(controller.yaw)
             controller.Y += velocidadNave * dt * np.sin(controller.yaw)
 
         if (glfw.get_key(window, glfw.KEY_S) == glfw.PRESS):
+            if indiceEstelaNave5 >= (N // 3):
+                indiceEstelaNave5 = 0
+            matricesEstelas5[indiceEstelaNave5] = matriz_estela_nueva5
+            indiceEstelaNave5 += 1
             controller.X -= velocidadNave * dt * np.cos(controller.yaw)
             controller.Y -= velocidadNave * dt * np.sin(controller.yaw)
 
@@ -219,9 +277,18 @@ def main():
             controller.yaw -= dt * 1.5
 
         if (glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS):
+            if indiceEstelaNave5 >= (N // 3):
+                indiceEstelaNave5 = 0
+            matricesEstelas5[indiceEstelaNave5] = matriz_estela_nueva5
+            indiceEstelaNave5 += 1
+            controller.posicionAnterior = [controller.X, controller.Y, controller.Z]
             controller.Z += velocidadNave * dt
         if (glfw.get_key(window, glfw.KEY_LEFT_SHIFT) == glfw.PRESS
                 or glfw.get_key(window, glfw.KEY_RIGHT_SHIFT) == glfw.PRESS):
+            if indiceEstelaNave5 >= (N // 3):
+                indiceEstelaNave5 = 0
+            matricesEstelas5[indiceEstelaNave5] = matriz_estela_nueva5
+            indiceEstelaNave5 += 1
             controller.Z -= velocidadNave * dt
         glUseProgram(pipeline.shaderProgram)
 
@@ -249,7 +316,7 @@ def main():
         # Antes de los 44 segundos el sol se agrande y luego se contrae, esto se logra gracias a la funcion coseno
         if t1 < tiempoLimite:
             matriz_sol = tr.matmul([tr.rotationZ(t1 * 0.5), tr.uniformScale(1 + 0.5*t1*math.cos(math.pi*t1/(tiempoLimite+2))/(tiempoLimite+2))])
-        else: # Cuando se llega a los 44 el sol se mantiene constante
+        else:  # Cuando se llega a los 44 el sol se mantiene constante
             matriz_sol = tr.matmul([tr.rotationZ(t1 * 0.5), tr.uniformScale(0.5)])
 
         # Se crean las matrices de movimiento de los demas planetas
@@ -340,6 +407,37 @@ def main():
             tr.rotationY(math.pi/2),
             tr.uniformScale(tamanhoNaves)])
 
+        matriz_estela_nueva1 = tr.matmul([
+            tr.translate(C1[step-1, 0], C1[step-1, 1], C1[step-1, 2]),
+            tr.rotationZ(-angle),
+            tr.rotationY(math.pi/2),
+            tr.uniformScale(0.03)])
+
+        matriz_estela_nueva2 = tr.matmul([
+            tr.translate(C2[step-1, 0], C2[step-1, 1], C2[step-1, 2]),
+            tr.rotationZ(-angle),
+            tr.rotationY(math.pi/2),
+            tr.uniformScale(0.03)])
+
+        matriz_estela_nueva3 = tr.matmul([
+            tr.translate(C3[step-1, 0], C3[step-1, 1], C3[step-1, 2]),
+            tr.rotationZ(-angle),
+            tr.rotationY(math.pi/2),
+            tr.uniformScale(0.03)])
+
+        matriz_estela_nueva4 = tr.matmul([
+            tr.translate(C4[step-1, 0], C4[step-1, 1], C4[step-1, 2]),
+            tr.rotationZ(-angle),
+            tr.rotationY(math.pi/2),
+            tr.uniformScale(0.03)])
+
+        if indiceEstelas >= (N//3):
+            indiceEstelas = 0
+        matricesEstelas1[indiceEstelas] = matriz_estela_nueva1
+        matricesEstelas2[indiceEstelas] = matriz_estela_nueva2
+        matricesEstelas3[indiceEstelas] = matriz_estela_nueva3
+        matricesEstelas4[indiceEstelas] = matriz_estela_nueva4
+        indiceEstelas += 1
         step = step + 1
 
         # En esta parte se maneja el color
@@ -438,6 +536,31 @@ def main():
             glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matriz_nave5)
             pipeline.drawCall(gpuNave5)
 
+            for matrizEstela in matricesEstelas1:
+                if matrizEstela is not None:
+                    glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
+                    pipeline.drawCall(gpuEstelaUnitaria1)
+
+            for matrizEstela in matricesEstelas2:
+                if matrizEstela is not None:
+                    glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
+                    pipeline.drawCall(gpuEstelaUnitaria2)
+
+            for matrizEstela in matricesEstelas3:
+                if matrizEstela is not None:
+                    glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
+                    pipeline.drawCall(gpuEstelaUnitaria3)
+
+            for matrizEstela in matricesEstelas4:
+                if matrizEstela is not None:
+                    glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
+                    pipeline.drawCall(gpuEstelaUnitaria4)
+
+            for matrizEstela in matricesEstelas5:
+                if matrizEstela is not None:
+                    glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
+                    pipeline.drawCall(gpuEstelaUnitaria5)
+
 
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         pipeline.drawCall(gpuAxis, GL_LINES)
@@ -470,6 +593,11 @@ def main():
     gpuNave3.clear()
     gpuNave4.clear()
     gpuNave5.clear()
+    gpuEstelaUnitaria1.clear()
+    gpuEstelaUnitaria2.clear()
+    gpuEstelaUnitaria3.clear()
+    gpuEstelaUnitaria4.clear()
+    gpuEstelaUnitaria5.clear()
 
     glfw.terminate()
 

@@ -12,14 +12,13 @@ def createGPUShapeStatic(pipeline, shape):
     return gpuShape
 
 
-def createOFFShape(pipeline, r, g, b):
-    shape = readOFF(getAssetPath('Tri_Fighter.off'), (r, g, b))
+def createOffShape(pipeline, archivoOff, r, g, b):
+    shape = readOFF(getAssetPath(archivoOff), (r, g, b))
     gpuShape = es.GPUShape().initBuffers()
     pipeline.setupVAO(gpuShape)
     gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
 
     return gpuShape
-
 
 def createTextureShape(pipeline, r, g, b):
     shape = bs.createTextureQuad(1.0, 1.0)
