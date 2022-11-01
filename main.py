@@ -25,48 +25,14 @@ view = None
 class Controller:
     def __init__(self):
         self.fillPolygon = True
-        self.X = 3.0
-        self.Y = 3.0
-        self.Z = 2.0
+        self.X = 17
+        self.Y = 17
+        self.Z = 17
         self.pitch = np.pi/2
         self.yaw = 0.0
         self.turbo = False
-class Spotlight:
-    def __init__(self):
-        self.ambient = np.array([0,0,0])
-        self.diffuse = np.array([0,0,0])
-        self.specular = np.array([0,0,0])
-        self.constant = 0
-        self.linear = 0
-        self.quadratic = 0
-        self.position = np.array([0,0,0])
-        self.direction = np.array([0,0,0])
-        self.cutOff = 0
-        self.outerCutOff = 0
 
 controller = Controller()
-
-spotlightsPool = dict()
-
-
-def setLights():
-    # TAREA4: Primera luz spotlight
-    spot1 = Spotlight()
-    spot1.ambient = np.array([0.0, 0.0, 0.0])
-    spot1.diffuse = np.array([1.0, 1.0, 1.0])
-    spot1.specular = np.array([1.0, 1.0, 1.0])
-    spot1.constant = 1.0
-    spot1.linear = 0.09
-    spot1.quadratic = 0.032
-    spot1.position = np.array([2, 5, 0])  # TAREA4: esta ubicada en esta posición
-    spot1.direction = np.array(
-        [0, -1, 0])  # TAREA4: está apuntando perpendicularmente hacia el terreno (Y-, o sea hacia abajo)
-    spot1.cutOff = np.cos(np.radians(12.5))  # TAREA4: corte del ángulo para la luz
-    spot1.outerCutOff = np.cos(np.radians(45))  # TAREA4: la apertura permitida de la luz es de 45°
-    # mientras más alto es este ángulo, más se difumina su efecto
-
-    spotlightsPool['spot1'] = spot1  # TAREA4: almacenamos la luz en el diccionario, con una clave única
-
 
 def on_key(window, key, scancode, action, mods):
     if action != glfw.PRESS:
@@ -111,8 +77,8 @@ def main():
         glfw.set_window_should_close(window, True)
 
     global view, viewing1, viewing2, viewing3, viewing4, controller
-    width = 2000
-    height = 1500
+    width = 800
+    height = 600
 
     window = glfw.create_window(width, height, "Sistema Solar", None, None)
 
@@ -135,7 +101,7 @@ def main():
     glUseProgram(pipeline.shaderProgram)
 
     # Setting up the clear screen color
-    glClearColor(0.15, 0.15, 0.15, 1.0)
+    glClearColor(0, 0, 0, 1.0)
 
     # As we work in 3D, we need to check which part is in front,
     # and which one is at the back
@@ -150,19 +116,19 @@ def main():
     pipelineTexture.setupVAO(gpuBackground)
     gpuBackground.fillBuffers(shapeBackground.vertices, shapeBackground.indices, GL_STATIC_DRAW)
 
-    gpuBackground.texture = es.textureSimpleSetup(getAssetPath("estrellas.jpg"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
+    gpuBackground.texture = es.textureSimpleSetup(getAssetPath("stars.jpg"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
 
     # Variables para asignar los colores del sol de manera dinamica
-    rsol = 180
+    rsol = 255
     gsol = 50
     bsol = 0
 
     # Aqui se crean las figuras planetarias
-    gpuSol = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(2, rsol/255, gsol / 255, bsol/255, 5))  # Valor real 7
+    gpuSol = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(2, rsol/255, gsol / 255, bsol/255, 10))  # Valor real 7
 
     gpuMercurio = createGPUShapeStatic(pipelinePhong, bs.crearEsferaConPuntosCaoticos(0.12, 1, 180 / 255, 0))  # Valor real 0.03
     gpuVenus = createGPUShapeStatic(pipelinePhong, bs.crearEsferaConZonasCaoticas(0.24, 1, 120 / 255, 0))  # Valor real 0.06
-    gpuTierra = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(0.252, 0, 170 / 255, 0, 0))  # Valor real 0.063
+    gpuTierra = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(0.252, 0, 170 / 255, 0, 4))  # Valor real 0.063
     gpuLumbre = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(0.252, 218/255, 247 / 255, 166/255, 0))  # Planeta estatico para practicar las camaras
     gpuLuna = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(0.084, 100/255, 100/255, 100/255, 0))
     gpuMarte = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(0.132, 1, 0, 0, 0))
@@ -176,21 +142,21 @@ def main():
     gpuUrano = createGPUShapeStatic(pipelinePhong, bs.crearEsferaConZonasCaoticas(0.3, 0, 1, 200 / 255))  # Valor real: 0.5
     gpuNeptuno = createGPUShapeStatic(pipelinePhong, bs.crearEsferaConZonasCaoticas(0.29, 0, 0, 1))  # Valor real: 0.49
     gpuAnilloNeptuno1 = createGPUShapeStatic(pipelinePhong, bs.crearAnillo(0.4, 0.395, 0, 200/255, 140/255))
-    gpuEstelaUnitaria1 = createGPUShapeStatic(pipelinePhong, bs.createColorNormalsCube(120/255, 20/255, 20/255))
-    gpuEstelaUnitaria2 = createGPUShapeStatic(pipelinePhong, bs.createColorNormalsCube(20/255, 20/255, 120/255))
-    gpuEstelaUnitaria3 = createGPUShapeStatic(pipelinePhong, bs.createColorNormalsCube(120/255, 120/255, 0/255))
-    gpuEstelaUnitaria4 = createGPUShapeStatic(pipelinePhong, bs.createColorNormalsCube(0/255, 120/255, 120/255))
-    gpuEstelaUnitaria5 = createGPUShapeStatic(pipelinePhong, bs.createColorNormalsCube(180/255, 180/255, 180/255))
+    gpuEstelaUnitaria1 = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(0.5, 20/255, 120/255, 20/255, 0))  # Verde
+    gpuEstelaUnitaria2 = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(0.5, 20/255, 20/255, 120/255, 0))  # Azul
+    gpuEstelaUnitaria3 = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(0.5, 120/255, 120/255, 0/255, 0))  # Amarillo
+    gpuEstelaUnitaria4 = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(0.5, 0/255, 120/255, 120/255, 0))  # cyan
+    gpuEstelaUnitaria5 = createGPUShapeStatic(pipelinePhong, bs.crearEsfera(0.5, 180/255, 20/255, 20/255, 0))  # Rojo
 
-    gpuNave1 = createOffShape(pipelineReadOff, "Tri_Fighter.off", 120 / 255, 20 / 255, 20 / 255)
-    gpuNave2 = createOffShape(pipelineReadOff, "Tri_Fighter.off", 20 / 255, 20 / 255, 120 / 255)
+    gpuNave1 = createOffShape(pipelineReadOff, "NabooFighter.off", 20 / 255, 120 / 255, 20 / 255)
+    gpuNave2 = createOffShape(pipelineReadOff, "FromSP.off", 20 / 255, 20 / 255, 120 / 255)
     gpuNave3 = createOffShape(pipelineReadOff, "Tri_Fighter.off", 120 / 255, 120 / 255, 0 / 255)
-    gpuNave4 = createOffShape(pipelineReadOff, "Tri_Fighter.off", 0 / 255, 120 / 255, 120 / 255)
-    gpuNave5 = createOffShape(pipelineReadOff, "Tri_Fighter.off", 180 / 255, 180 / 255, 180 / 255)
+    gpuNave4 = createOffShape(pipelineReadOff, "XJ5 X-wing starfighter.off", 0 / 255, 120 / 255, 120 / 255)
+    gpuNave5 = createOffShape(pipelineReadOff, "NabooFighter.off", 180 / 255, 20 / 255, 20 / 255)
     tamanhoNaves = 0.2
 
     # Aqui se crea la view1
-    cam_radius = 20
+    cam_radius = 18
     viewPos = np.array([cam_radius, cam_radius, cam_radius])
 
     view1 = tr.lookAt(viewPos, np.array([0, 0, 0]), np.array([0, 0, 1]))
@@ -208,9 +174,9 @@ def main():
     matricesEstelas3 = [None] * (N//3)
     matricesEstelas4 = [None] * (N//3)
     matricesEstelas5 = [None] * (N//3)
-    C2 = curvas.generarCurvaCerradaNave2(N, 3*3, 3)
-    C3 = curvas.generarCurvaCerradaNave1(N, 7*3, -4)
-    C4 = curvas.generarCurvaCerradaNave2(N, 10*3, 0)
+    C2 = curvas.generarCurvaCerradaNave2(N, 6, 3)
+    C3 = curvas.generarCurvaCerradaNave1(N, 7, -2)
+    C4 = curvas.generarCurvaCerradaNave2(N, 10, 0)
     step = 0
 
     tiempoLimite = 222
@@ -227,15 +193,15 @@ def main():
         if viewing1:
             view = view1
         elif viewing2:
-            viewPos = crear_view2(velocidadTiempo * 1.25, 8)
+            viewPos = crear_view2(velocidadTiempo * 1.25, 7)
             view = tr.lookAt(viewPos, np.array([0, 0, 0]), np.array([0, 0, 1]))
         elif viewing3:
             viewPos = crear_view2(velocidadTiempo/4, 2 + 16)
             view = tr.lookAt(viewPos, np.array([0, 0, 0]), np.array([0, 0, 1]))
         elif viewing4:
-            Xesf = tamanhoNaves * 12 * np.sin(controller.pitch + np.pi/8) * np.cos(controller.yaw - np.pi/2)  # coordenada X esferica
-            Yesf = tamanhoNaves * 12 * np.sin(controller.pitch + np.pi/8) * np.sin(controller.yaw - np.pi/2)  # coordenada Y esferica
-            Zesf = tamanhoNaves * 12 * np.cos(controller.pitch + np.pi/8)
+            Xesf = tamanhoNaves * 4 * np.sin(controller.pitch + np.pi/8) * np.cos(controller.yaw - np.pi/8)  # coordenada X esferica
+            Yesf = tamanhoNaves * 4 * np.sin(controller.pitch + np.pi/8) * np.sin(controller.yaw - np.pi/8)  # coordenada Y esferica
+            Zesf = tamanhoNaves * 4 * np.cos(controller.pitch + np.pi/8)
             viewPos = np.array([
                 controller.X - Xesf,
                 controller.Y - Yesf,
@@ -255,7 +221,7 @@ def main():
 
         matriz_estela_nueva5 = tr.matmul([
             tr.translate(controller.X, controller.Y, controller.Z),
-            tr.uniformScale(0.015)])
+            tr.uniformScale(0.01)])
 
         if (glfw.get_key(window, glfw.KEY_W) == glfw.PRESS):
             if indiceEstelaNave5 >= (N // 3):
@@ -397,31 +363,32 @@ def main():
             tr.translate(controller.X, controller.Y, controller.Z),
             tr.rotationZ(controller.yaw),
             tr.rotationY(math.pi/2),
+            tr.rotationZ(math.pi/2),
             tr.uniformScale(tamanhoNaves)])
 
         matriz_estela_nueva1 = tr.matmul([
             tr.translate(C1[step-1, 0], C1[step-1, 1], C1[step-1, 2]),
             tr.rotationZ(-angle),
             tr.rotationY(math.pi/2),
-            tr.uniformScale(0.03)])
+            tr.uniformScale(0.01)])
 
         matriz_estela_nueva2 = tr.matmul([
             tr.translate(C2[step-1, 0], C2[step-1, 1], C2[step-1, 2]),
             tr.rotationZ(-angle),
             tr.rotationY(math.pi/2),
-            tr.uniformScale(0.03)])
+            tr.uniformScale(0.01)])
 
         matriz_estela_nueva3 = tr.matmul([
             tr.translate(C3[step-1, 0], C3[step-1, 1], C3[step-1, 2]),
             tr.rotationZ(-angle),
             tr.rotationY(math.pi/2),
-            tr.uniformScale(0.03)])
+            tr.uniformScale(0.01)])
 
         matriz_estela_nueva4 = tr.matmul([
             tr.translate(C4[step-1, 0], C4[step-1, 1], C4[step-1, 2]),
             tr.rotationZ(-angle),
             tr.rotationY(math.pi/2),
-            tr.uniformScale(0.03)])
+            tr.uniformScale(0.01)])
 
         if indiceEstelas >= (N//3):
             indiceEstelas = 0
@@ -445,112 +412,114 @@ def main():
         glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
 
         # Object is barely visible at only ambient. Diffuse behavior is slightly red. Sparkles are white
-        glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "Ka"), 0.3, 0.3, 0.3)
-        glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "Kd"), 0.2, 0.2, 0.2)
-        glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "Ks"), 0.9, 0.9, 0.9)
+        glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "Ka"), 1, 1, 1)
+        glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "Kd"), 1, 1, 1)
+        glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "Ks"), 0.5, 0.5, 0.5)
 
         # TO DO: Explore different parameter combinations to understand their effect!
 
         glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "lightPosition"), 0, 0, 0)
-        glUniform1ui(glGetUniformLocation(pipelinePhong.shaderProgram, "shininess"), 100)
 
-        glUniform1f(glGetUniformLocation(pipelinePhong.shaderProgram, "constantAttenuation"), 0.1)
-        glUniform1f(glGetUniformLocation(pipelinePhong.shaderProgram, "linearAttenuation"), 0.001)
-        glUniform1f(glGetUniformLocation(pipelinePhong.shaderProgram, "quadraticAttenuation"), 0.001)
+        glUniform1f(glGetUniformLocation(pipelinePhong.shaderProgram, "constantAttenuation"), 0.5)
+        glUniform1f(glGetUniformLocation(pipelinePhong.shaderProgram, "linearAttenuation"), 0.0009)
+        glUniform1f(glGetUniformLocation(pipelinePhong.shaderProgram, "quadraticAttenuation"), 0.00032)
 
-        if velocidadTiempo < tiempoLimite + 20: # Esta es una manera de desaparecer los planetas despues de que el sol entra en supernova
-            # Es una solucion parche no muy elegante pero funciona
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_sol)
+        pipelinePhong.drawCall(gpuSol)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_mercurio)
-            pipelinePhong.drawCall(gpuMercurio)
+        glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "Ka"), 0.3, 0.3, 0.3)
+        glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "Ks"), 0, 0, 0)
+        glUniform1ui(glGetUniformLocation(pipelinePhong.shaderProgram, "shininess"), 1000)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_venus)
-            pipelinePhong.drawCall(gpuVenus)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_mercurio)
+        pipelinePhong.drawCall(gpuMercurio)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_tierra)
-            pipelinePhong.drawCall(gpuTierra)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_venus)
+        pipelinePhong.drawCall(gpuVenus)
 
-            # glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, tr.translate(5.5, 1, 1))
-            # pipelinePhong.drawCall(gpuLumbre) # Esto es un objeto estatico para probar la camara en movimiento
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_tierra)
+        pipelinePhong.drawCall(gpuTierra)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_luna)
-            pipelinePhong.drawCall(gpuLuna)
+        # glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, tr.translate(5.5, 1, 1))
+        # pipelinePhong.drawCall(gpuLumbre) # Esto es un objeto estatico para probar la camara en movimiento
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_marte)
-            pipelinePhong.drawCall(gpuMarte)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_luna)
+        pipelinePhong.drawCall(gpuLuna)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_jupiter)
-            pipelinePhong.drawCall(gpuJupiter)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_marte)
+        pipelinePhong.drawCall(gpuMarte)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_saturno)
-            pipelinePhong.drawCall(gpuSaturno)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_jupiter)
+        pipelinePhong.drawCall(gpuJupiter)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno1)
-            pipelinePhong.drawCall(gpuAnilloSaturnoA)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_saturno)
+        pipelinePhong.drawCall(gpuSaturno)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno1)
-            pipelinePhong.drawCall(gpuAnilloSaturnoB)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno1)
+        pipelinePhong.drawCall(gpuAnilloSaturnoA)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno1)
-            pipelinePhong.drawCall(gpuAnilloSaturnoC)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno1)
+        pipelinePhong.drawCall(gpuAnilloSaturnoB)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno1)
-            pipelinePhong.drawCall(gpuAnilloSaturnoD)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno1)
+        pipelinePhong.drawCall(gpuAnilloSaturnoC)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno1)
-            pipelinePhong.drawCall(gpuAnilloSaturnoE)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno1)
+        pipelinePhong.drawCall(gpuAnilloSaturnoD)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_urano)
-            pipelinePhong.drawCall(gpuUrano)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_anillo_saturno1)
+        pipelinePhong.drawCall(gpuAnilloSaturnoE)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_neptuno)
-            pipelinePhong.drawCall(gpuNeptuno)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_urano)
+        pipelinePhong.drawCall(gpuUrano)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_neptuno)
-            pipelinePhong.drawCall(gpuAnilloNeptuno1)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_neptuno)
+        pipelinePhong.drawCall(gpuNeptuno)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_sol)
-            pipelinePhong.drawCall(gpuSol)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_neptuno)
+        pipelinePhong.drawCall(gpuAnilloNeptuno1)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_nave1)
-            pipelinePhong.drawCall(gpuNave1)
+        glUniform3f(glGetUniformLocation(pipelinePhong.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_nave2)
-            pipelinePhong.drawCall(gpuNave2)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_nave1)
+        pipelinePhong.drawCall(gpuNave1)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_nave3)
-            pipelinePhong.drawCall(gpuNave3)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_nave2)
+        pipelinePhong.drawCall(gpuNave2)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_nave4)
-            pipelinePhong.drawCall(gpuNave4)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_nave3)
+        pipelinePhong.drawCall(gpuNave3)
 
-            glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_nave5)
-            pipelinePhong.drawCall(gpuNave5)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_nave4)
+        pipelinePhong.drawCall(gpuNave4)
 
-            for matrizEstela in matricesEstelas1:
-                if matrizEstela is not None:
-                    glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
-                    pipelinePhong.drawCall(gpuEstelaUnitaria1)
+        glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matriz_nave5)
+        pipelinePhong.drawCall(gpuNave5)
 
-            for matrizEstela in matricesEstelas2:
-                if matrizEstela is not None:
-                    glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
-                    pipelinePhong.drawCall(gpuEstelaUnitaria2)
+        for matrizEstela in matricesEstelas1:
+            if matrizEstela is not None:
+                glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
+                pipelinePhong.drawCall(gpuEstelaUnitaria1)
 
-            for matrizEstela in matricesEstelas3:
-                if matrizEstela is not None:
-                    glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
-                    pipelinePhong.drawCall(gpuEstelaUnitaria3)
+        for matrizEstela in matricesEstelas2:
+            if matrizEstela is not None:
+                glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
+                pipelinePhong.drawCall(gpuEstelaUnitaria2)
 
-            for matrizEstela in matricesEstelas4:
-                if matrizEstela is not None:
-                    glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
-                    pipelinePhong.drawCall(gpuEstelaUnitaria4)
+        for matrizEstela in matricesEstelas3:
+            if matrizEstela is not None:
+                glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
+                pipelinePhong.drawCall(gpuEstelaUnitaria3)
 
-            for matrizEstela in matricesEstelas5:
-                if matrizEstela is not None:
-                    glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
-                    pipelinePhong.drawCall(gpuEstelaUnitaria5)
+        for matrizEstela in matricesEstelas4:
+            if matrizEstela is not None:
+                glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
+                pipelinePhong.drawCall(gpuEstelaUnitaria4)
+
+        for matrizEstela in matricesEstelas5:
+            if matrizEstela is not None:
+                glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, matrizEstela)
+                pipelinePhong.drawCall(gpuEstelaUnitaria5)
 
 
         glUniformMatrix4fv(glGetUniformLocation(pipelinePhong.shaderProgram, "model"), 1, GL_TRUE, tr.identity())

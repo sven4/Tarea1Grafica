@@ -43,3 +43,8 @@ TAB: Cambia el modo a LINE.
 Camara 4:
 Esta camara permite visualizar a la nave controlada por el usuario.
 - Se activa con la tecla 4
+
+Parte 3:
+Changelog:
+Se cambiaron los modelos de las naves y se añadieron estelas.
+Se añadieron luces segun lo pedido para cada planeta.
