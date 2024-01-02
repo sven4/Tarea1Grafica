@@ -26,7 +26,7 @@ Esta camara permite ver los anillos de Saturno. Use variables globales y flags c
 
 PARTE 2:
 
-Changelog (que yo recuerde XD):
+Changelog:
 - Se modificaron las viejas camaras para que se vean de mejor manera.
 - Se refactorizo el codigo para meter funcionalidades en archivos mas pequeños, aligerando el codigo en el main.py
 - Ahora la explosion del sol depende del parametro tiempoLimite, que actualmente se tarda 222 segundos en explotar.
